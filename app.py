@@ -3,7 +3,8 @@ import os
 import pandas as pd
 import streamlit as st
 import io
-import openpyxl
+
+
 
 
 st.set_page_config(page_title="📀Data Sweeper", layout="wide")
