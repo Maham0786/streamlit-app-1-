@@ -2,10 +2,6 @@ from io import BytesIO
 import os
 import pandas as pd
 import streamlit as st
-import io
-
-
-
 
 st.set_page_config(page_title="📀Data Sweeper", layout="wide")
 st.title("📀Data Sweeper")
@@ -16,17 +12,16 @@ uploaded_files = st.file_uploader("Upload your files (CSV or Excel):", type=["cs
 if uploaded_files:
     for file in uploaded_files:
         file_ext = os.path.splitext(file.name)[-1].lower()
-        
+
         if file_ext == ".csv":
             df = pd.read_csv(file)
         elif file_ext == ".xlsx":
-            df = pd.read_excel(file)
+            df = pd.read_excel(file, engine="openpyxl")  
         else:
             st.error(f"Unsupported file type: {file_ext}")
-            continue  
-        
-    
-        last_file_name = file.name  
+            continue
+
+        last_file_name = file.name
 
         st.write(f"**File Name:** {file.name}")
         st.write(f"**File Size:** {file.getbuffer().nbytes / 1024:.2f} KB")
@@ -37,7 +32,7 @@ if uploaded_files:
         st.subheader("Data Cleaning Options")
 
         if st.checkbox(f"Clean Data for {file.name}"):
-            col1, col2 = st.columns(2)  
+            col1, col2 = st.columns(2)
 
             with col1:
                 if st.button(f"Remove Duplicates from {file.name}"):
@@ -54,29 +49,30 @@ if uploaded_files:
         if columns:
             df = df[columns]
 
-        
         st.subheader("📊 Data Visualization")
         if st.checkbox(f"Show Visualization for {file.name}"):
             st.bar_chart(df.select_dtypes(include='number').iloc[:, :2])
 
-        
         st.subheader("🔄 Conversion Options")
         conversion_type = st.radio(f"Convert {file.name} to:", ["CSV", "Excel"], key=file.name)
 
         if st.button(f"Convert {file.name}"):
             buffer = BytesIO()
-            
+
             if conversion_type == "CSV":
                 df.to_csv(buffer, index=False)
                 new_file_name = file.name.replace(file_ext, ".csv")
                 mime_type = "text/csv"
 
             elif conversion_type == "Excel":
-                df.to_excel(buffer, index=False)
+                with pd.ExcelWriter(buffer, engine="openpyxl") as writer:  
+                    df.to_excel(writer, index=False)
+                
                 new_file_name = file.name.replace(file_ext, ".xlsx")
                 mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
-            buffer.seek(0)
+            buffer.seek(0) 
+
             st.download_button(
                 label=f"⬇️ Download {new_file_name} as {conversion_type}",
                 data=buffer,
@@ -85,3 +81,11 @@ if uploaded_files:
             )
 
     st.success("🎉 All files processed!")
+
+
+
+
+
+            
+        
+      
